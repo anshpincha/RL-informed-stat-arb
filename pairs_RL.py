@@ -8,9 +8,8 @@ from collections import deque
 import random
 
 class PairsTradingEnvironment:
-    """
-    Environment for pairs trading strategy optimization using RL
-    """
+    
+    # Environment for pairs trading strategy optimization using RL
     
     def __init__(self, google_prices, microsoft_prices, hedge_ratio, lookback_period=200):
         self.google_prices = google_prices.values
@@ -29,7 +28,7 @@ class PairsTradingEnvironment:
         self.reset()
     
     def reset(self):
-        """Reset environment to initial state"""
+        # Reset environment to initial state
         self.current_step = self.lookback_period
         self.position = 0  # 0: no position, 1: long spread, -1: short spread
         self.entry_price_m = 0
@@ -40,7 +39,7 @@ class PairsTradingEnvironment:
         return self.get_state()
     
     def get_state(self):
-        """Get current state for RL agent"""
+        # Get current state for RL agent
         if self.current_step >= self.total_length - 1:
             return None
             
@@ -62,7 +61,7 @@ class PairsTradingEnvironment:
         return state
     
     def calculate_zscore(self, window_size):
-        """Calculate z-score for current position"""
+        # z-score calculation 
         if self.current_step < window_size:
             return 0
             
@@ -83,7 +82,7 @@ class PairsTradingEnvironment:
         return (current_spread - mean_spread) / std_spread
     
     def step(self, action):
-        """Execute one step in the environment"""
+        # Executing one step in the environment
         window_size, entry_threshold, exit_threshold = action
         
         if self.current_step >= self.total_length - 1:
@@ -143,9 +142,7 @@ class PairsTradingEnvironment:
 
 
 class QLearningAgent:
-    """
-    Q-Learning agent for pairs trading optimization
-    """
+    # Q-Learning agent
     
     def __init__(self, action_space, learning_rate=0.1, discount_factor=0.95, epsilon=0.1):
         self.action_space = action_space
@@ -153,7 +150,7 @@ class QLearningAgent:
         self.discount_factor = discount_factor
         self.epsilon = epsilon
         
-        # Discretize continuous state space
+        # Discretize cts state space
         self.state_bins = {
             'spread_mean': np.linspace(-50, 50, 10),
             'spread_std': np.linspace(0, 50, 10),
@@ -165,7 +162,7 @@ class QLearningAgent:
         # Initialize Q-table
         self.q_table = {}
         
-        # Create action combinations
+        # action combinations
         self.actions = []
         for window in action_space['window_sizes']:
             for entry_thresh in action_space['entry_thresholds']:
@@ -174,7 +171,7 @@ class QLearningAgent:
                         self.actions.append((window, entry_thresh, exit_thresh))
     
     def discretize_state(self, state):
-        """Convert continuous state to discrete state for Q-table"""
+        # Convert cts state to discrete state for Q-table
         if state is None:
             return None
             
@@ -192,7 +189,7 @@ class QLearningAgent:
         return tuple(discrete_state)
     
     def get_action(self, state):
-        """Select action using epsilon-greedy policy"""
+        # epsilon-greedy policy for selecting epsilon
         discrete_state = self.discretize_state(state)
         
         if discrete_state not in self.q_table:
@@ -206,7 +203,7 @@ class QLearningAgent:
         return self.actions[action_idx], action_idx
     
     def update_q_value(self, state, action_idx, reward, next_state):
-        """Update Q-value using Q-learning update rule"""
+        # Update Q-value
         discrete_state = self.discretize_state(state)
         discrete_next_state = self.discretize_state(next_state)
         
@@ -227,12 +224,12 @@ class QLearningAgent:
         self.q_table[discrete_state][action_idx] = new_q
     
     def decay_epsilon(self, decay_rate=0.995):
-        """Decay exploration rate"""
+        # Decay exploration rate
         self.epsilon = max(0.01, self.epsilon * decay_rate)
 
 
 def train_rl_agent(google_prices, microsoft_prices, hedge_ratio, episodes=100):
-    """Train the RL agent"""
+    # Training
     env = PairsTradingEnvironment(google_prices, microsoft_prices, hedge_ratio)
     agent = QLearningAgent(env.action_space)
     
@@ -275,7 +272,7 @@ def train_rl_agent(google_prices, microsoft_prices, hedge_ratio, episodes=100):
 
 
 def test_strategy(agent, google_prices, microsoft_prices, hedge_ratio):
-    """Test the trained strategy"""
+    # Test the trained strategy
     env = PairsTradingEnvironment(google_prices, microsoft_prices, hedge_ratio)
     agent.epsilon = 0  # No exploration during testing
     
@@ -311,7 +308,6 @@ def test_strategy(agent, google_prices, microsoft_prices, hedge_ratio):
     }
 
 
-# Load and prepare data (using your existing code structure)
 def main():
     # Load data
     tickers = ['MSFT', 'GOOG']
@@ -322,7 +318,7 @@ def main():
     google = data['Close']['GOOG']
     microsoft = data['Close']['MSFT']
     
-    # Calculate hedge ratio (using your existing method)
+    # Calculate hedge ratio
     google_with_const = sm.add_constant(google)
     model = sm.OLS(microsoft, google_with_const)
     results = model.fit()
